@@ -1,21 +1,97 @@
-MIT License
+RTConsole Non-Commercial Attribution License 1.0
 
-Copyright (c) 2026 Galetta886
+Copyright (c) 2026 Galetta886. All rights reserved except as expressly granted below.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Original Repository: https://github.com/Galetta886/RTConsole
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Definitions
+
+"Software" means the RTConsole source code, executable form, documentation,
+assets, modifications, and derivative works distributed under this license.
+
+"Commercial Use" means use primarily intended for commercial advantage or
+monetary compensation. It includes selling, licensing, renting, or bundling the
+Software for payment; using it as part of a paid product or service; charging for
+access, installation, hosting, support, or administration based on the Software;
+and using the Software in advertising, sponsorship, or other revenue-generating
+promotion.
+
+"Distribution" means providing, publishing, mirroring, uploading, promoting, or
+otherwise making any copy or modified version of the Software available to
+another person or organization, whether as source code or executable form.
+
+2. Permission
+
+Subject to every condition in this license, you may view, download, run, study,
+and modify the Software for personal, educational, research, hobby, community,
+or other non-commercial purposes.
+
+You may distribute the Software for non-commercial purposes only when all of the
+following conditions are met:
+
+a. You keep this license and all copyright notices with every copy.
+
+b. You clearly and prominently identify the project as derived from RTConsole
+and provide a working link to the Original Repository. The attribution must be
+visible in the distributed README or documentation, on the download or project
+page, and in any post, video, article, or other material used to promote the copy.
+
+c. You do not hide, remove, replace, or make the Original Repository attribution
+difficult to find.
+
+d. You clearly state whether you changed the Software and do not imply that your
+changes are maintained, approved, or endorsed by Galetta886.
+
+e. You distribute the Software and any modified version under this same license,
+without adding terms that reduce these conditions.
+
+3. Prohibited Uses
+
+Without prior written permission from Galetta886, you may not:
+
+a. make any Commercial Use of the Software;
+
+b. sell, sublicense, rent, monetize, or include the Software in a paid bundle,
+product, hosted service, or managed service;
+
+c. redistribute, mirror, repost, repackage, or promote the Software without the
+clear Original Repository attribution required by Section 2;
+
+d. present the Software or a modified version as your original work, or as an
+official product of RimWorld, Ludeon Studios, or RimWorld Together; or
+
+e. use the names, logos, or trademarks of Galetta886 except as needed to provide
+the required factual attribution.
+
+4. Separate Commercial Permission
+
+Commercial rights are not granted by this license. You may contact Galetta886 to
+request a separate written commercial license. No permission is granted unless
+it is provided in writing by the copyright holder.
+
+5. Contributions
+
+Unless a separate written agreement states otherwise, any contribution submitted
+for inclusion in the Original Repository is licensed to Galetta886 and the public
+under this license. You represent that you have the right to submit it.
+
+6. Termination and Cure
+
+Your rights under this license terminate automatically when you violate its
+terms. For a first violation, your rights may be reinstated if you stop the
+violation, correct its effects where reasonably possible, and fully comply within
+30 days after receiving notice. Repeated, deliberate, or uncured violations are
+not automatically reinstated.
+
+7. Legal Rights and No Endorsement
+
+This license does not limit rights that applicable law grants without permission.
+It grants no trademark rights, patent rights, or right to claim endorsement.
+
+8. Disclaimer
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. TO THE MAXIMUM EXTENT
+PERMITTED BY LAW, THE COPYRIGHT HOLDER WILL NOT BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
