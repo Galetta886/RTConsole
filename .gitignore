@@ -1,0 +1,28 @@
+# Build outputs
+artifacts/
+bin/
+dist/
+*.exe
+*.pdb
+*.zip
+*.log
+
+# Runtime configuration and state
+rtconsole.json
+logs/
+Profiles/
+Backups/
+Assets/
+Configs/
+Server-win-x64/
+
+# Test and editor state
+test/.work/
+.vs/
+.vscode/
+*.user
+*.suo
+
+# OS files
+Thumbs.db
+.DS_Store

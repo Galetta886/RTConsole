@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RTConsole · 环世界联机服务器面板</title>
+<style>
+  :root { --bg:#12141a; --card:#1b1f2a; --line:#2a3040; --fg:#dde3ee; --dim:#8b93a7;
+          --acc:#4f9cf9; --ok:#3fbf6f; --warn:#e8b64c; --bad:#e05d5d; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font-family:"Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif; font-size:14px; }
+  header { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+           padding:12px 18px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; z-index:5; }
+  h1 { font-size:17px; margin:0; font-weight:600; }
+  .chip { padding:3px 12px; border-radius:12px; font-size:12px; background:#2a3040; color:var(--dim); }
+  .chip.on { background:rgba(63,191,111,.16); color:var(--ok); }
+  .chip.off { background:rgba(224,93,93,.14); color:var(--bad); }
+  .chip.ext { background:rgba(232,182,76,.15); color:var(--warn); }
+  .spacer { flex:1; }
+  main { display:grid; grid-template-columns: 380px 1fr; gap:14px; padding:14px 18px; max-width:1400px; margin:0 auto; }
+  @media (max-width: 900px){ main { grid-template-columns: 1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:14px; }
+  .card h2 { font-size:13px; margin:0 0 10px; color:var(--dim); font-weight:600; letter-spacing:.5px; }
+  button { background:#262d3d; color:var(--fg); border:1px solid var(--line); border-radius:6px;
+           padding:6px 12px; cursor:pointer; font-size:13px; }
+  button:hover { border-color:var(--acc); }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button.danger { background:rgba(224,93,93,.12); border-color:rgba(224,93,93,.5); color:var(--bad); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .btnrow { display:flex; gap:8px; flex-wrap:wrap; }
+  input[type=text], select { background:#12141a; color:var(--fg); border:1px solid var(--line);
+           border-radius:6px; padding:6px 10px; font-size:13px; width:100%; }
+  input:focus, select:focus { outline:none; border-color:var(--acc); }
+  .row { display:flex; gap:8px; margin-top:8px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--dim); font-weight:500; }
+  .player { display:flex; align-items:center; gap:8px; padding:7px 4px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .player:last-child { border-bottom:none; }
+  .pname { font-weight:600; }
+  .pip { color:var(--dim); font-size:12px; }
+  .player .btnrow { margin-left:auto; }
+  .player button { padding:3px 9px; font-size:12px; }
+  #log { background:#0d0f14; border:1px solid var(--line); border-radius:8px; height:420px;
+         overflow-y:auto; padding:10px 12px; font-family:Consolas,"Courier New",monospace;
+         font-size:12.5px; line-height:1.55; white-space:pre-wrap; word-break:break-all; }
+  .logmeta { display:flex; align-items:center; gap:14px; margin-bottom:8px; color:var(--dim); font-size:12px; }
+  .empty { color:var(--dim); padding:8px 4px; }
+  .modal-mask { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
+                align-items:center; justify-content:center; z-index:50; }
+  .modal { background:var(--card); border:1px solid var(--line); border-radius:10px;
+           padding:20px; width:420px; max-width:92vw; }
+  .modal h3 { margin:0 0 10px; }
+  .modal p { color:var(--dim); font-size:13px; line-height:1.6; }
+  #toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:60;
+           background:#262d3d; border:1px solid var(--line); padding:9px 18px; border-radius:8px;
+           display:none; font-size:13px; }
+  .tabs { display:flex; gap:8px; margin-bottom:0; }
+  .tab { padding:8px 18px; border-radius:8px 8px 0 0; cursor:pointer; color:var(--dim);
+         border:1px solid transparent; border-bottom:none; }
+  .tab.active { background:var(--card); border-color:var(--line); color:var(--fg); }
+  #viewBackup { display:none; }
+  .hint { color:var(--dim); font-size:12px; margin-top:8px; line-height:1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RTConsole · 环世界联机服务器</h1>
+  <span id="statusChip" class="chip">加载中…</span>
+  <span class="spacer"></span>
+  <div class="btnrow">
+    <button class="primary" id="btnStart">启动服务器</button>
+    <button id="btnStop">停止服务器</button>
+    <button id="btnDoBackup">手动备份</button>
+    <button class="danger" id="btnShutdown">退出控制台</button>
+  </div>
+</header>
+
+<div style="max-width:1400px;margin:10px auto 0;padding:0 18px;">
+  <div class="tabs">
+    <div class="tab active" data-v="viewCtl">控制台</div>
+    <div class="tab" data-v="viewBackup">备份管理</div>
+    <div class="tab" data-v="viewProfile">存档档案</div>
+  </div>
+</div>
+
+<main>
+  <section>
+    <div id="viewCtl">
+      <div class="card">
+        <h2>在线玩家</h2>
+        <div id="players"><div class="empty">暂无玩家在线</div></div>
+      </div>
+      <div class="card">
+        <h2>事件发射</h2>
+        <input type="text" id="evName" list="evList" placeholder="事件名，如 RaidEnemy（可点「获取事件列表」）">
+        <datalist id="evList"></datalist>
+        <div class="row">
+          <select id="evTarget" style="flex:1"><option value="__all">全体玩家</option></select>
+          <button id="btnEvent">发射事件</button>
+        </div>
+        <div class="row"><button id="btnEventList" style="width:100%">获取事件列表 (eventlist)</button></div>
+        <div class="hint">注意：玩家有事件保护冷却（如刚缩放过地图），发射可能被服务器拒绝，看右侧日志。</div>
+      </div>
+      <div class="card">
+        <h2>发言</h2>
+        <div class="row"><input type="text" id="chatMsg" placeholder="以服务器身份聊天 (chat)"><button id="btnChat">聊天</button></div>
+        <div class="row"><input type="text" id="bcMsg" placeholder="给全员发信件公告 (broadcast)"><button id="btnBc">公告</button></div>
+      </div>
+      <div class="card">
+        <h2>快捷命令</h2>
+        <div class="btnrow">
+          <button data-cmd="list">在线列表</button>
+          <button data-cmd="deeplist">全部玩家</button>
+          <button data-cmd="banlist">封禁列表</button>
+          <button data-cmd="modlist">模组列表</button>
+          <button data-cmd="getip">公网IP</button>
+          <button data-cmd="getversion">版本</button>
+          <button data-cmd="gcclear">清理内存</button>
+          <button data-cmd="help">帮助</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="viewBackup">
+      <div class="card">
+        <h2>备份（Backups\Servers）</h2>
+        <div class="btnrow" style="margin-bottom:10px">
+          <button class="primary" id="btnDoBackup2">手动备份一次</button>
+          <button id="btnRefreshBk">刷新列表</button>
+        </div>
+        <table>
+          <thead><tr><th>备份文件</th><th>大小</th><th>时间</th><th></th></tr></thead>
+          <tbody id="bkRows"><tr><td colspan="4" class="empty">加载中…</td></tr></tbody>
+        </table>
+        <div class="hint">还原流程：停止服务器 → 点「还原」→ 输入 RESTORE 确认。还原前会自动把当前数据存为 PreRestore_*.zip，可再还原回来。</div>
+      </div>
+    </div>
+
+    <div id="viewProfile" style="display:none">
+      <div class="card">
+        <h2>存档档案 —— 按模组组合切换整套世界与存档</h2>
+        <div class="hint" style="margin:0 0 10px">当前服务器模组数：<b id="curMods">…</b>。
+          每份档案 = ModConfig 模组白名单 + 世界（地图/定居点/事件）+ 全部玩家存档与账号。
+          切换流程：自动停服 → 自动保底快照当前状态 → <b>整体替换</b> Assets+Configs → 自动重新开服。</div>
+        <div class="row">
+          <input type="text" id="profName" placeholder="档案名，如：鼠族重模组包 / 原版轻量 / 中模组娱乐" style="flex:1">
+          <button class="primary" id="btnProfSave" style="width:130px">保存当前为档案</button>
+        </div>
+        <table style="margin-top:10px">
+          <thead><tr><th>档案</th><th>模组数</th><th>大小</th><th>保存时间</th><th></th></tr></thead>
+          <tbody id="profRows"><tr><td colspan="5" class="empty">加载中…</td></tr></tbody>
+        </table>
+        <div class="hint">保存时若服务器在运行，会自动触发一次服务器备份（几秒钟）。
+          每次切换前都会自动生成 PreRestore 保底快照，可随时从「备份管理」页还原回切换前的状态。</div>
+      </div>
+
+      <div class="card">
+        <h2>重开新世界（换模组后开新档）</h2>
+        <div class="hint" style="margin:0 0 10px">自动流程：保底快照当前世界 → 停服 →
+          清空 地图 / 定居点 / 世界对象 / 玩家存档 / 公会 / 市场 / 河流道路，
+          然后重启服务器，按<b>当前模组列表</b>自动生成全新世界。
+          玩家账号默认保留（不用重新注册）。旧世界已存档案的话随时可切回来。</div>
+        <div class="row" style="align-items:center">
+          <label style="display:flex;align-items:center;gap:6px;color:var(--dim)">
+            <input type="checkbox" id="keepUsers" checked style="width:auto">保留玩家账号（Users）
+          </label>
+          <span style="flex:1"></span>
+          <button class="danger" id="btnNewWorld">重开新世界</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card" style="margin-bottom:0">
+      <div class="logmeta">
+        <h2 style="margin:0">服务器日志</h2>
+        <label style="display:flex;align-items:center;gap:5px"><input type="checkbox" id="autoscroll" checked>自动滚动</label>
+        <span class="spacer" style="flex:1"></span>
+        <span id="onlineInfo"></span>
+      </div>
+      <div id="log"></div>
+      <div class="row">
+        <input type="text" id="cmdInput" placeholder="输入命令回车发送（resetserver 需二次确认）">
+        <button class="primary" id="btnSend" style="width:90px">发送</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-mask" id="mask">
+  <div class="modal">
+    <h3 id="mTitle">确认操作</h3>
+    <p id="mText"></p>
+    <p id="mWordHint"></p>
+    <input type="text" id="mInput" placeholder="">
+    <div class="row" style="justify-content:flex-end">
+      <button id="mCancel">取消</button>
+      <button class="danger" id="mOk">确认执行</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+var T = new URLSearchParams(location.hash.slice(1)).get('token') ||
+        new URLSearchParams(location.search).get('token') || '';
+var lastLogKey = '';
+var stateTimer = null;
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+function toast(msg, bad){
+  var t=$('toast'); t.textContent=msg;
+  t.style.borderColor = bad ? 'rgba(224,93,93,.6)' : '';
+  t.style.display='block';
+  clearTimeout(t._h); t._h=setTimeout(function(){ t.style.display='none'; }, 3200);
+}
+function api(path, opts){
+  opts = opts || {};
+  opts.headers = opts.headers || {};
+  opts.headers['X-Token'] = T;
+  if (opts.body) { opts.headers['Content-Type']='application/json'; }
+  return fetch(path, opts).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if (!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+      return j;
+    });
+  });
+}
+function post(path, obj){ return api(path, {method:'POST', body: JSON.stringify(obj||{})}); }
+function sendCmd(cmd, confirm){ return post('/api/cmd', {cmd:cmd, confirm:confirm||''}); }
+
+// ---- 确认弹窗 ----
+var modalCb = null;
+function askConfirm(title, text, word, cb){
+  $('mTitle').textContent = title;
+  $('mText').textContent = text;
+  $('mWordHint').textContent = word ? ('输入 ' + word + ' 以确认：') : '';
+  $('mInput').value=''; $('mInput').style.display = word?'block':'none';
+  $('mOk').disabled = !!word;
+  modalCb = cb;
+  $('mask').style.display='flex';
+  if (word) $('mInput').focus();
+}
+$('mInput').addEventListener('input', function(){ $('mOk').disabled = $('mInput').value !== $('mWordHint').textContent.replace('输入 ','').replace(' 以确认：',''); });
+$('mCancel').onclick = function(){ $('mask').style.display='none'; modalCb=null; };
+$('mOk').onclick = function(){
+  var word = $('mWordHint').textContent ? $('mWordHint').textContent.replace('输入 ','').replace(' 以确认：','') : '';
+  if (word && $('mInput').value !== word) return;
+  $('mask').style.display='none';
+  if (modalCb) modalCb(word);
+  modalCb=null;
+};
+
+// ---- 状态轮询 ----
+function renderState(s){
+  var chip=$('statusChip');
+  if (s.running){ chip.className='chip on'; chip.textContent='● 运行中 · 端口 '+s.port; }
+  else if (s.extRunning){ chip.className='chip ext'; chip.textContent='⚠ 有外部服务器实例在跑（非本面板托管）'; }
+  else { chip.className='chip off'; chip.textContent='○ 已停止'; }
+
+  var p=$('players');
+  if (!s.online.length){ p.innerHTML='<div class="empty">暂无玩家在线</div>'; }
+  else {
+    var h='';
+    s.online.forEach(function(u){
+      h += '<div class="player"><span class="pname">'+esc(u.n)+'</span><span class="pip">'+esc(u.ip||'')+'</span>'
+        + '<span class="btnrow">'
+        + '<button onclick="userCmd(\'forcesave '+esc(u.n)+'\')">存档</button>'
+        + '<button onclick="userCmdKick(\''+esc(u.n)+'\')">踢出</button>'
+        + '<button onclick="userCmdBan(\''+esc(u.n)+'\')">封禁</button>'
+        + '<button onclick="userCmd(\'op '+esc(u.n)+'\')">OP</button>'
+        + '<button onclick="userCmd(\'deop '+esc(u.n)+'\')">去OP</button>'
+        + '</span></div>';
+    });
+    p.innerHTML=h;
+  }
+  var sel=$('evTarget');
+  var cur=sel.value;
+  var opts='<option value="__all">全体玩家</option>';
+  s.online.forEach(function(u){ opts+='<option value="'+esc(u.n)+'">'+esc(u.n)+'</option>'; });
+  sel.innerHTML=opts; sel.value=opts.indexOf('value="'+cur+'"')>=0?cur:'__all';
+
+  var dl='';
+  (s.events||[]).forEach(function(e){ dl+='<option value="'+esc(e)+'">'; });
+  $('evList').innerHTML=dl;
+
+  $('onlineInfo').textContent = s.online.length ? ('连接 IP: '+(s.ips||[]).join(', ')) : '';
+  if ($('viewProfile').style.display==='block') $('curMods').textContent = (s.mods>=0 ? s.mods : '未知');
+
+  var key = s.lines.length + '|' + (s.lines.length?s.lines[s.lines.length-1]:'');
+  if (key !== lastLogKey){
+    lastLogKey = key;
+    var el=$('log');
+    var atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
+    el.innerHTML = s.lines.map(esc).join('\n');
+    if ($('autoscroll').checked && atBottom) el.scrollTop = el.scrollHeight;
+  }
+}
+function poll(){
+  api('/api/state').then(renderState).catch(function(e){
+    var chip=$('statusChip'); chip.className='chip off'; chip.textContent='面板后端离线: '+e.message;
+  });
+}
+window.userCmd = function(cmd){ sendCmd(cmd).then(function(){ toast('已发送: '+cmd); }).catch(function(e){ toast(e.message,true); }); };
+window.userCmdKick = function(n){ askConfirm('踢出玩家','确定把 '+n+' 踢出服务器？','',function(){ sendCmd('kick '+n).then(function(){toast('已踢出 '+n);}).catch(function(e){toast(e.message,true);}); }); };
+window.userCmdBan = function(n){ askConfirm('封禁玩家','确定封禁 '+n+'？封禁后需在「封禁列表」查看到，可用 pardon 解封。','',function(){ sendCmd('ban '+n).then(function(){toast('已封禁 '+n);}).catch(function(e){toast(e.message,true);}); }); };
+
+// ---- 备份 ----
+function loadBackups(){
+  api('/api/backups').then(function(j){
+    var h='';
+    if (!j.backups.length) h='<tr><td colspan="4" class="empty">还没有备份</td></tr>';
+    j.backups.forEach(function(b){
+      h+='<tr><td>'+esc(b.n)+(b.pre?' <span class="pip">(还原前快照)</span>':'')+'</td><td>'+b.mb+' MB</td><td>'+esc(b.t)+'</td>'
+       + '<td><button class="danger" onclick="doRestore(\''+esc(b.n)+'\')">还原</button></td></tr>';
+    });
+    $('bkRows').innerHTML=h;
+  }).catch(function(e){ toast(e.message,true); });
+}
+window.doRestore = function(name){
+  askConfirm('还原备份', '将用 '+name+' 覆盖服务器的 Assets 与 Configs。'
+    + '若服务器在运行会先要求停止。当前数据会自动存为 PreRestore 快照。', 'RESTORE', function(word){
+    post('/api/restore', {file:name, confirm:word})
+      .then(function(j){ toast('还原完成，共 '+j.restored+' 个文件'); loadBackups(); })
+      .catch(function(e){ toast(e.message,true); });
+  });
+};
+
+// ---- 事件绑定 ----
+$('btnStart').onclick = function(){ post('/api/start').then(function(){ toast('启动命令已发出'); poll(); }).catch(function(e){ toast(e.message,true); }); };
+$('btnStop').onclick = function(){ askConfirm('停止服务器','确定停止服务器？在线玩家会断开。','',function(){ post('/api/stop').then(function(){ toast('已停止'); poll(); }).catch(function(e){ toast(e.message,true); }); }); };
+$('btnDoBackup').onclick = $('btnDoBackup2').onclick = function(){ sendCmd('backup').then(function(){ toast('备份命令已发出，稍后在备份页刷新'); }).catch(function(e){ toast(e.message,true); }); };
+$('btnShutdown').onclick = function(){ askConfirm('退出控制台','将停止服务器并退出 RTConsole。','',function(){ post('/api/shutdown').catch(function(){}); toast('正在退出…'); }); };
+$('btnEvent').onclick = function(){
+  var name=$('evName').value.trim(); if(!name){ toast('请填事件名',true); return; }
+  var t=$('evTarget').value;
+  var cmd = (t==='__all') ? ('eventall '+name) : ('event '+name+' '+t);
+  sendCmd(cmd).then(function(){ toast('已发射: '+cmd); $('evName').value=''; }).catch(function(e){ toast(e.message,true); });
+};
+$('btnEventList').onclick = function(){ sendCmd('eventlist').then(function(){ toast('事件列表输出在右侧日志，数秒后可点事件输入框看联想'); }).catch(function(e){ toast(e.message,true); }); };
+$('btnChat').onclick = function(){ var v=$('chatMsg').value.trim(); if(!v)return; sendCmd('chat '+v).then(function(){ $('chatMsg').value=''; }).catch(function(e){ toast(e.message,true); }); };
+$('btnBc').onclick = function(){ var v=$('bcMsg').value.trim(); if(!v)return; sendCmd('broadcast '+v).then(function(){ $('bcMsg').value=''; }).catch(function(e){ toast(e.message,true); }); };
+$('btnSend').onclick = sendFree;
+$('cmdInput').addEventListener('keydown', function(e){ if(e.key==='Enter') sendFree(); });
+function sendFree(){
+  var v=$('cmdInput').value.trim(); if(!v)return;
+  var first=v.split(/\s+/)[0].toLowerCase();
+  var go = function(){ sendCmd(v, first==='resetserver'?'RESET':'')
+    .then(function(){ $('cmdInput').value=''; })
+    .catch(function(e){ toast(e.message,true); }); };
+  if (first==='resetserver'){
+    askConfirm('危险命令','resetserver 会彻底清空服务器全部数据（玩家/地图/公会/设置）。','RESET',go);
+  } else go();
+}
+document.querySelectorAll('[data-cmd]').forEach(function(b){
+  b.onclick=function(){ sendCmd(b.getAttribute('data-cmd')).catch(function(e){ toast(e.message,true); }); };
+});
+document.querySelectorAll('.tab').forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+    t.classList.add('active');
+    ['viewCtl','viewBackup','viewProfile'].forEach(function(id){ $(id).style.display='none'; });
+    var v = t.getAttribute('data-v');
+    $(v).style.display='block';
+    if (v==='viewBackup') loadBackups();
+    if (v==='viewProfile') loadProfiles();
+  };
+});
+$('btnRefreshBk').onclick = loadBackups;
+
+// ---- 存档档案 ----
+function loadProfiles(){
+  api('/api/profiles').then(function(j){
+    $('curMods').textContent = (j.curMods>=0 ? j.curMods : '未知');
+    var h='';
+    if (!j.profiles.length) h='<tr><td colspan="5" class="empty">还没有档案，先用上面的按钮把当前状态存一份</td></tr>';
+    j.profiles.forEach(function(p){
+      h+='<tr><td>'+esc(p.n.replace(/\.zip$/i,''))+'</td><td>'+(p.mods>=0?p.mods:'?')+'</td><td>'+p.mb+' MB</td><td>'+esc(p.t)+'</td>'
+       + '<td><button class="primary" onclick="doProfSwitch(\''+esc(p.n)+'\')">切换</button> '
+       + '<button class="danger" onclick="doProfDelete(\''+esc(p.n)+'\')">删除</button></td></tr>';
+    });
+    $('profRows').innerHTML=h;
+  }).catch(function(e){ toast(e.message,true); });
+}
+window.saveProfile = function(){
+  var name=$('profName').value.trim(); if(!name){ toast('请先填档案名',true); return; }
+  askConfirm('保存档案','将把当前 ModConfig + 世界 + 玩家存档 存为「'+name+'」。'
+    +'若服务器运行中会先自动触发一次服务器备份；同名档案将被覆盖。','',function(){
+    post('/api/profile/save',{name:name})
+      .then(function(j){ toast('已保存（模组数 '+(j.mods>=0?j.mods:'?')+'）'); $('profName').value=''; loadProfiles(); })
+      .catch(function(e){ toast(e.message,true); });
+  });
+};
+window.doProfSwitch = function(name){
+  askConfirm('切换档案','将停止服务器 → 自动保底快照当前状态 → 用「'+name+'」整体替换 Assets+Configs → 自动重新开服。','SWITCH',function(word){
+    post('/api/profile/switch',{file:name, confirm:word, autostart:'true'})
+      .then(function(j){ toast('已切换（'+j.restored+' 个文件，模组数 '+(j.mods>=0?j.mods:'?')+(j.started?'，已自动开服':'')+'）'); poll(); })
+      .catch(function(e){ toast(e.message,true); });
+  });
+};
+window.doProfDelete = function(name){
+  askConfirm('删除档案','确定永久删除档案「'+name+'」？服务器当前数据不受影响。','DELETE',function(word){
+    post('/api/profile/delete',{file:name, confirm:word})
+      .then(function(){ toast('已删除'); loadProfiles(); })
+      .catch(function(e){ toast(e.message,true); });
+  });
+};
+$('btnProfSave').onclick = function(){ saveProfile(); };
+$('btnNewWorld').onclick = function(){
+  var keep = $('keepUsers').checked;
+  askConfirm('重开新世界', '将保底快照当前世界 → 停服 → 清空世界/地图/定居点/玩家存档'
+    + (keep ? '（玩家账号保留）' : '（玩家账号一并清空）') + ' → 重启并按当前模组生成全新世界。'
+    + '确定要开新档吗？', 'NEWWORLD', function(word){
+    post('/api/world/reset', {confirm: word, keepUsers: keep ? 'true' : 'false'})
+      .then(function(j){ toast('世界已重开' + (j.started ? '，服务器已启动，玩家进来自动生成新世界' : '，服务器未启动，请手动点启动')); poll(); })
+      .catch(function(e){ toast(e.message,true); });
+  });
+};
+
+poll();
+stateTimer = setInterval(poll, 2000);
+</script>
+</body>
+</html>

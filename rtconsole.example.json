@@ -1,0 +1,7 @@
+{
+  "ServerDir": "Server-win-x64",
+  "Port": 2678,
+  "Token": "",
+  "AutoStart": true,
+  "OpenBrowser": true
+}
